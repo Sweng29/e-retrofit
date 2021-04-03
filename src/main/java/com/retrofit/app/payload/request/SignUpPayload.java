@@ -1,4 +1,4 @@
-package com.retrofit.app.payload;
+package com.retrofit.app.payload.request;
 
 import java.util.Date;
 import javax.validation.constraints.NotEmpty;

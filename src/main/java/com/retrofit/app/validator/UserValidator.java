@@ -1,6 +1,6 @@
 package com.retrofit.app.validator;
 
-import com.retrofit.app.payload.SignUpPayload;
+import com.retrofit.app.payload.request.SignUpPayload;
 import org.springframework.util.ObjectUtils;
 
 public class UserValidator {
