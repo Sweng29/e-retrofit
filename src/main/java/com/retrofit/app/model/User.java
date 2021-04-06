@@ -1,9 +1,12 @@
 package com.retrofit.app.model;
 
 import com.retrofit.app.commons.BaseEntity;
+import com.retrofit.app.constants.ProfileStatus;
 import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,6 +31,8 @@ public class User extends BaseEntity {
     @Column(name = "mobile_number",nullable = false,unique = true)
     private String mobileNumber;
     private Date dateOfBirth;
+    @Enumerated(EnumType.STRING)
+    private ProfileStatus profileStatus;
     private Boolean isActive;
 
 }

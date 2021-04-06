@@ -1,5 +1,6 @@
 package com.retrofit.app.service.impl;
 
+import com.retrofit.app.constants.ProfileStatus;
 import com.retrofit.app.dto.UserDTO;
 import com.retrofit.app.mapper.UserMapper;
 import com.retrofit.app.model.User;
@@ -57,6 +58,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .username(signUpPayload.getUsername())
                 .password(passwordEncoder.encode(signUpPayload.getPassword()))
                 .isActive(Boolean.FALSE)
+                .profileStatus(ProfileStatus.APPROVAL_PENDING)
                 .build();
 
         return UserMapper.map(userRepository.save(user));
