@@ -1,6 +1,7 @@
 package com.retrofit.app.payload.request;
 
 import java.io.Serializable;
+import javax.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,9 +13,11 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class JwtRequest implements Serializable {
+public class LoginRequest implements Serializable {
 
-    private String username;
+    @NotBlank(message = "Username field can not be empty.")
+    private String usernameOrEmailOrMobileNo;
+    @NotBlank(message = "Password can not be empty.")
     private String password;
 
 }

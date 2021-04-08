@@ -27,7 +27,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private UserDetailsService jwtUserDetailsService;
 
     @Autowired
-    private JwtRequestFilter jwtRequestFilter;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private static final String[] AUTH_WHITELIST = {
             // -- Swagger UI v2
@@ -42,6 +42,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/authenticate",
+            "/",
+            "/favicon.ico",
+            "/**/*.png",
+            "/**/*.gif",
+            "/**/*.svg",
+            "/**/*.jpg",
+            "/**/*.html",
+            "/**/*.css",
+            "/**/*.js",
+            "/v1/api/user/checkUsernameAvailability",
+            "/v1/api/user/checkEmailAvailability",
+            "/v1/api/user/checkMobileNumberAvailability",
             "/v1/public/**"
             // other public endpoints of your API may be appended to this array
     };
@@ -67,25 +79,26 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
-        // We don't need CSRF for this example
+
         httpSecurity
+                .cors()
+                .and()
                 .csrf()
                 .disable()
-                // dont authenticate this particular request
-                .authorizeRequests()
-                .antMatchers(AUTH_WHITELIST)
-                .permitAll()
-                // all other requests need to be authenticated
-                .anyRequest().authenticated().and()
-                // make sure we use stateless session; session won't be used to
-                // store user's state.
                 .exceptionHandling()
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .and()
                 .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authorizeRequests()
+                .antMatchers(AUTH_WHITELIST)
+                .permitAll()
+                .anyRequest()
+                .authenticated();
 
         // Add a filter to validate the tokens with every request
-        httpSecurity.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
     }
+
 }

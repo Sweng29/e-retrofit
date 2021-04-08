@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -51,11 +53,65 @@ public class GlobalExceptionHandler {
                 EntityHelper.isNotNull(e.getMessage())
                         ? e.getMessage()
                         : "Server error. Please check with admin";
-        return Response
-                .builder()
-                .responseCode(201)
+    return Response.builder()
+        .responseCode(HttpStatus.BAD_REQUEST.value())
+        .message(message)
+        .result(Collections.emptyList())
+        .build();
+    }
+
+    @ResponseBody
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response<Object> badCredentialsExceptionHandler(
+            HttpServletRequest req, HttpServletResponse response, Exception e){
+
+        logException(e.getMessage(), req.getRequestURL(), e);
+        String message =
+                EntityHelper.isNotNull(e.getMessage())
+                        ? e.getMessage()
+                        : "Server error. Bad credentials provided.";
+        return Response.builder()
+                .responseCode(HttpStatus.BAD_REQUEST.value())
                 .message(message)
                 .result(Collections.emptyList())
                 .build();
     }
+
+    @ResponseBody
+    @ExceptionHandler(DisabledException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response<Object> disabledUserExceptionHandler(
+            HttpServletRequest req, HttpServletResponse response, Exception e){
+
+        logException(e.getMessage(), req.getRequestURL(), e);
+        String message =
+                EntityHelper.isNotNull(e.getMessage())
+                        ? e.getMessage()
+                        : "Server error, User is disabled.";
+        return Response.builder()
+                .responseCode(HttpStatus.BAD_REQUEST.value())
+                .message(message)
+                .result(Collections.emptyList())
+                .build();
+    }
+
+    @ResponseBody
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response<Object> globalExceptionHandler(
+            HttpServletRequest req, HttpServletResponse response, Exception e){
+
+        logException(e.getMessage(), req.getRequestURL(), e);
+        String message =
+                EntityHelper.isNotNull(e.getMessage())
+                        ? e.getMessage()
+                        : "Server error. Something went wrong.";
+    return Response.builder()
+        .responseCode(HttpStatus.BAD_REQUEST.value())
+        .message(message)
+        .result(Collections.emptyList())
+        .build();
+    }
+
 }

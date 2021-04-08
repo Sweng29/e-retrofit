@@ -12,8 +12,14 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class JwtResponse implements Serializable {
+public class JwtAuthenticationResponse implements Serializable {
 
-    String jwtToken;
+    private String accessToken;
+    private String tokenType = "Bearer";
+
+    public JwtAuthenticationResponse(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
 
 }
