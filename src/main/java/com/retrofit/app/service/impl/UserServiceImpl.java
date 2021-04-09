@@ -1,22 +1,52 @@
 package com.retrofit.app.service.impl;
 
+import com.retrofit.app.config.JwtTokenProvider;
+import com.retrofit.app.constants.ProfileStatus;
 import com.retrofit.app.dto.UserDTO;
+import com.retrofit.app.exception.InvalidInputException;
+import com.retrofit.app.exception.UserNotFoundException;
+import com.retrofit.app.exception.error.UserErrorType;
+import com.retrofit.app.filters.UserFilterAttributes;
+import com.retrofit.app.helper.EntityHelper;
+import com.retrofit.app.helper.PageUtils;
 import com.retrofit.app.mapper.UserMapper;
 import com.retrofit.app.model.User;
-import com.retrofit.app.payload.SignUpPayload;
+import com.retrofit.app.payload.request.EditUserPayload;
+import com.retrofit.app.payload.request.SignUpPayload;
 import com.retrofit.app.repository.UserRepository;
+import com.retrofit.app.security.UserPrincipal;
+import com.retrofit.app.service.BaseService;
 import com.retrofit.app.service.UserService;
+import com.retrofit.app.specifications.UserSpecification;
 import com.retrofit.app.validator.UserValidator;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends BaseService implements UserService, UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public UserDTO signUp(SignUpPayload signUpPayload) {
@@ -30,16 +60,16 @@ public class UserServiceImpl implements UserService {
         boolean usernameExists = validateUsernameExists(signUpPayload.getUsername());
 
         if (!isValidPayload)
-            return null;
+            throw new InvalidInputException("Invalid request payload");
 
         if (emailExists)
-            return null;
+            throw new InvalidInputException("Invalid request payload - email already exists.");
 
         if (mobileNumberExists)
-            return null;
+            throw new InvalidInputException("Invalid request payload - mobile number already exists.");
 
         if (usernameExists)
-            return null;
+            throw new InvalidInputException("Invalid request payload - username already exists.");
 
         User user = User
                 .builder()
@@ -47,11 +77,22 @@ public class UserServiceImpl implements UserService {
                 .email(signUpPayload.getEmail())
                 .mobileNumber(signUpPayload.getMobileNumber())
                 .username(signUpPayload.getUsername())
-                .password(signUpPayload.getPassword())
+                .password(passwordEncoder.encode(signUpPayload.getPassword()))
                 .isActive(Boolean.FALSE)
+                .profileStatus(ProfileStatus.APPROVAL_PENDING)
                 .build();
 
         return UserMapper.map(userRepository.save(user));
+    }
+
+    @Override
+    public UserDTO findUserById(Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(
+                () -> new UserNotFoundException(UserErrorType.USER_NOT_FOUND.getMessage()));
+        return UserMapper.map(user);
     }
 
     private boolean validateUsernameExists(String username) {
@@ -67,4 +108,124 @@ public class UserServiceImpl implements UserService {
     private boolean validateEmailExists(String email) {
         return userRepository.findByEmail(email).isPresent();
     }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) {
+        // Let people login with either username or email
+        User user = userRepository.findByUsernameOrEmailOrMobileNumber(username)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found with username, email or mobile"
+                                + " number : " + username)
+                );
+
+        return UserPrincipal.create(user);
+
+    }
+
+    @Override
+    @Transactional
+    public UserDetails loadUserById(Long id) {
+        User user = userRepository.findById(id).orElseThrow(
+                () -> new UsernameNotFoundException("User not found with id : " + id)
+        );
+
+        return UserPrincipal.create(user);
+    }
+
+    @Override
+    public String authenticateUser(String usernameEmailOrMobileNumber,String password) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        usernameEmailOrMobileNumber,
+                        password
+                )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return jwtTokenProvider.generateToken(authentication);
+    }
+
+    @Override
+    public List<UserDTO> findAllUsers(UserFilterAttributes filterAttributes) {
+        Pageable pageable = PageUtils.createPageWithSort(filterAttributes);
+        Page<User> page = userRepository.findAll(UserSpecification.findAll(filterAttributes), pageable);
+        return page.map(UserMapper::map).getContent();
+    }
+
+    @Override
+    public User findById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public UserDTO findCurrentUserDetails() {
+        User user =  getLoggedInUser();
+        return UserMapper.map(user);
+    }
+
+    @Override
+    public Boolean existsByUsernameOrEmailOrMobileNumber(String usernameEmailOrMobileNumber) {
+        return userRepository
+                .findByUsernameOrEmailOrMobileNumber(usernameEmailOrMobileNumber)
+                .isPresent();
+    }
+
+    @Override
+    public UserDTO updateUser(EditUserPayload editUserPayload) {
+        boolean validateEditPayload = UserValidator.validateEditUserPayload(editUserPayload);
+
+        if (!validateEditPayload)
+            throw new InvalidInputException("Invalid payload data, please try again.");
+
+        User editableUser = findById(editUserPayload.getUserId());
+        updateNonRestrictedUserDetails(editableUser,editUserPayload);
+        if (isAdminLoggedIn())
+            updateRestrictedUserDetails(editableUser,editUserPayload);
+
+        return UserMapper.map(userRepository.save(editableUser));
+    }
+
+    @Override
+    public ResponseEntity<String> softDeleteUser(Long userId) {
+        User user = findById(userId);
+        user.setIsActive(Boolean.FALSE);
+        userRepository.save(user);
+        return ResponseEntity.ok("User has been deleted successfully.");
+    }
+
+    private void updateNonRestrictedUserDetails(User editableUser, EditUserPayload editUserPayload) {
+        editableUser.setDateOfBirth(
+                EntityHelper.getNotNull(
+                        editableUser.getDateOfBirth(),
+                        editUserPayload.getDateOfBirth())
+        );
+
+        if (UserValidator.isMobileNumberValid(editUserPayload.getMobileNumber()) &&
+                userRepository.existsByMobileNumber(editUserPayload.getMobileNumber()))
+            editableUser.setMobileNumber(editUserPayload.getMobileNumber());
+
+        if (isPasswordValid(editUserPayload.getPassword(),editUserPayload.getConfirmPassword()))
+            editableUser.setMobileNumber(passwordEncoder.encode(editUserPayload.getPassword()));
+    }
+
+    private boolean isPasswordValid(String password, String confirmPassword) {
+        return (password != null && confirmPassword != null) && password.equals(confirmPassword);
+    }
+
+    private void updateRestrictedUserDetails(User editableUser, EditUserPayload editUserPayload) {
+        editableUser.setIsActive(
+                EntityHelper.getNotNull(
+                        editableUser.getIsActive(),
+                        editUserPayload.getIsActive()
+                )
+        );
+
+        editableUser.setProfileStatus(
+                EntityHelper.getNotNull(
+                        editableUser.getProfileStatus(),
+                        editUserPayload.getProfileStatus()
+                )
+        );
+    }
+
 }

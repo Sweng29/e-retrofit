@@ -1,5 +1,6 @@
 package com.retrofit.app.mapper;
 
+import com.retrofit.app.dto.RoleDTO;
 import com.retrofit.app.dto.UserDTO;
 import com.retrofit.app.model.User;
 import java.util.Collections;
@@ -22,6 +23,7 @@ public interface UserMapper {
                 .mobileNumber(user.getMobileNumber())
                 .dateOfBirth(user.getDateOfBirth())
                 .isActive(user.getIsActive())
+                .roleDTO(RoleDTO.of(user.getRole()))
                 .build();
     }
 
