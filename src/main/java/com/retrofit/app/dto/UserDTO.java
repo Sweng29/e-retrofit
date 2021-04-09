@@ -23,4 +23,5 @@ public class UserDTO {
     private String password;
     private Date dateOfBirth;
     private boolean isActive;
+    private RoleDTO roleDTO;
 }

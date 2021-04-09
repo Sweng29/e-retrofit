@@ -3,9 +3,10 @@ package com.retrofit.app.security;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.retrofit.app.constants.ProfileStatus;
 import com.retrofit.app.model.User;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -68,10 +69,11 @@ public class UserPrincipal implements UserDetails {
     }
 
     public static UserPrincipal create(User user) {
-    List<GrantedAuthority> authorities =
-        user.getRoles().stream()
-            .map(role -> new SimpleGrantedAuthority(role.getRoleConstant().name()))
-            .collect(Collectors.toList());
+    List<GrantedAuthority> authorities = new ArrayList<>(
+            Collections.singleton(
+                    new SimpleGrantedAuthority(user.getRole().getRoleConstant().name())
+            )
+    );
 
         return new UserPrincipal(
                 user.getId(),

@@ -114,4 +114,22 @@ public class GlobalExceptionHandler {
         .build();
     }
 
+    @ResponseBody
+    @ExceptionHandler(InvalidInputException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response<Object> invalidInputExceptionHandler(
+            HttpServletRequest req, HttpServletResponse response, Exception e){
+
+        logException(e.getMessage(), req.getRequestURL(), e);
+        String message =
+                EntityHelper.isNotNull(e.getMessage())
+                        ? e.getMessage()
+                        : "Server error. Invalid request payload.";
+        return Response.builder()
+                .responseCode(HttpStatus.BAD_REQUEST.value())
+                .message(message)
+                .result(Collections.emptyList())
+                .build();
+    }
+
 }
