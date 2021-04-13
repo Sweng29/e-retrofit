@@ -5,6 +5,7 @@ import com.retrofit.app.filters.UserFilterAttributes;
 import com.retrofit.app.model.User;
 import com.retrofit.app.payload.request.EditUserPayload;
 import com.retrofit.app.payload.request.SignUpPayload;
+import com.retrofit.app.payload.request.UserCreationPayload;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,5 +22,5 @@ public interface UserService {
     Boolean existsByUsernameOrEmailOrMobileNumber(String usernameEmailOrMobileNumber);
     UserDTO updateUser(EditUserPayload editUserPayload);
     ResponseEntity<String> softDeleteUser(Long userId);
-
+    UserDTO createUser(UserCreationPayload userCreationPayload);
 }

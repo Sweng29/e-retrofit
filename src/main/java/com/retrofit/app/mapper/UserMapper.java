@@ -24,6 +24,7 @@ public interface UserMapper {
                 .dateOfBirth(user.getDateOfBirth())
                 .isActive(user.getIsActive())
                 .roleDTO(RoleDTO.of(user.getRole()))
+                .profileStatus(user.getProfileStatus())
                 .build();
     }
 

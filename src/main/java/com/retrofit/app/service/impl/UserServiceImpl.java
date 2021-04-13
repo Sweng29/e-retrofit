@@ -10,9 +10,12 @@ import com.retrofit.app.filters.UserFilterAttributes;
 import com.retrofit.app.helper.EntityHelper;
 import com.retrofit.app.helper.PageUtils;
 import com.retrofit.app.mapper.UserMapper;
+import com.retrofit.app.model.Role;
 import com.retrofit.app.model.User;
 import com.retrofit.app.payload.request.EditUserPayload;
 import com.retrofit.app.payload.request.SignUpPayload;
+import com.retrofit.app.payload.request.UserCreationPayload;
+import com.retrofit.app.repository.RoleRepository;
 import com.retrofit.app.repository.UserRepository;
 import com.retrofit.app.security.UserPrincipal;
 import com.retrofit.app.service.BaseService;
@@ -41,6 +44,8 @@ public class UserServiceImpl extends BaseService implements UserService, UserDet
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
@@ -174,8 +179,13 @@ public class UserServiceImpl extends BaseService implements UserService, UserDet
     public UserDTO updateUser(EditUserPayload editUserPayload) {
         boolean validateEditPayload = UserValidator.validateEditUserPayload(editUserPayload);
 
+        User loggedInUser = getLoggedInUser();
         if (!validateEditPayload)
             throw new InvalidInputException("Invalid payload data, please try again.");
+
+        if (!loggedInUser.getId().equals(editUserPayload.getUserId()))
+            throw new InvalidInputException("Unauthorized access, "
+                    + "you are not allowed to perform this operation.");
 
         User editableUser = findById(editUserPayload.getUserId());
         updateNonRestrictedUserDetails(editableUser,editUserPayload);
@@ -191,6 +201,47 @@ public class UserServiceImpl extends BaseService implements UserService, UserDet
         user.setIsActive(Boolean.FALSE);
         userRepository.save(user);
         return ResponseEntity.ok("User has been deleted successfully.");
+    }
+
+    @Override
+    public UserDTO createUser(UserCreationPayload userCreationPayload) {
+        boolean isValidPayload = UserValidator.validateUserCreationRequestPayload(userCreationPayload);
+
+        boolean emailExists = validateEmailExists(userCreationPayload.getEmail());
+
+        boolean mobileNumberExists = validateMobileNumberExists(userCreationPayload.getMobileNumber());
+
+        boolean usernameExists = validateUsernameExists(userCreationPayload.getUsername());
+
+        Role role = roleRepository
+                .findById(userCreationPayload.getRoleId())
+                .orElseThrow(() -> new InvalidInputException("No role found with given id."));
+
+        if (!isValidPayload)
+            throw new InvalidInputException("Invalid request payload");
+
+        if (emailExists)
+            throw new InvalidInputException("Invalid request payload - email already exists.");
+
+        if (mobileNumberExists)
+            throw new InvalidInputException("Invalid request payload - mobile number already exists.");
+
+        if (usernameExists)
+            throw new InvalidInputException("Invalid request payload - username already exists.");
+
+        User user = User
+                .builder()
+                .dateOfBirth(userCreationPayload.getDateOfBirth())
+                .email(userCreationPayload.getEmail())
+                .mobileNumber(userCreationPayload.getMobileNumber())
+                .username(userCreationPayload.getUsername())
+                .password(passwordEncoder.encode(userCreationPayload.getPassword()))
+                .isActive(Boolean.FALSE)
+                .profileStatus(ProfileStatus.APPROVAL_PENDING)
+                .role(role)
+                .build();
+
+        return UserMapper.map(userRepository.save(user));
     }
 
     private void updateNonRestrictedUserDetails(User editableUser, EditUserPayload editUserPayload) {

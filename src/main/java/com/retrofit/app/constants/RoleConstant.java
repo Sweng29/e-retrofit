@@ -4,6 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum RoleConstant {
+    ROLE_ADMIN,
     ROLE_USER,
-    ROLE_ADMIN
+    ROLE_PATIENT,
+    ROLE_DOCTOR
 }

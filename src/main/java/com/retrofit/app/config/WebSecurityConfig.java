@@ -54,6 +54,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             "/v1/api/user/checkUsernameAvailability",
             "/v1/api/user/checkEmailAvailability",
             "/v1/api/user/checkMobileNumberAvailability",
+            "/v1/auth/**",
             "/v1/public/**"
             // other public endpoints of your API may be appended to this array
     };

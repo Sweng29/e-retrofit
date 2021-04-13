@@ -1,6 +1,7 @@
 package com.retrofit.app.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.retrofit.app.constants.ProfileStatus;
 import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,4 +25,5 @@ public class UserDTO {
     private Date dateOfBirth;
     private boolean isActive;
     private RoleDTO roleDTO;
+    private ProfileStatus profileStatus;
 }
