@@ -5,11 +5,9 @@ import com.retrofit.app.payload.request.SignUpPayload;
 import com.retrofit.app.payload.request.UserCreationPayload;
 import org.springframework.util.ObjectUtils;
 
-public class UserValidator {
+public interface UserValidator {
 
-    private UserValidator(){}
-
-    public static boolean validateSignUpRequestPayload(SignUpPayload signUpPayload)
+    static boolean validateSignUpRequestPayload(SignUpPayload signUpPayload)
     {
         if (ObjectUtils.isEmpty(signUpPayload))
         {
@@ -21,7 +19,7 @@ public class UserValidator {
                 signUpPayload.getPassword().equals(signUpPayload.getConfirmPassword());
     }
 
-    public static boolean validateEditUserPayload(EditUserPayload editUserPayload) {
+    static boolean validateEditUserPayload(EditUserPayload editUserPayload) {
         boolean isValid = Boolean.TRUE;
         if (ObjectUtils.isEmpty(editUserPayload))
             isValid = Boolean.FALSE;
@@ -32,11 +30,11 @@ public class UserValidator {
         return isValid;
     }
 
-    public static boolean isMobileNumberValid(String mobileNumber) {
+    static boolean isMobileNumberValid(String mobileNumber) {
         return mobileNumber!=null;
     }
 
-    public static boolean validateUserCreationRequestPayload(
+    static boolean validateUserCreationRequestPayload(
             UserCreationPayload userCreationPayload) {
 
         if (ObjectUtils.isEmpty(userCreationPayload))
