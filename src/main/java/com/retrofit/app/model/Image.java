@@ -2,6 +2,7 @@ package com.retrofit.app.model;
 
 import com.retrofit.app.commons.BaseEntity;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,4 +23,6 @@ public class Image extends BaseEntity {
     private String imageType;
     private String imageUrl;
     private Boolean isActive;
+    @ManyToOne
+    private Product product;
 }

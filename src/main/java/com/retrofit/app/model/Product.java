@@ -32,9 +32,9 @@ public class Product extends BaseEntity {
     private BigDecimal tradePrice;
     private Double productRating;
     private Boolean isActive = Boolean.TRUE;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     private Manufacturer manufacturer;
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(
             name = "images",
             joinColumns = {@JoinColumn(name = "product_id")},

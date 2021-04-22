@@ -13,6 +13,7 @@ import lombok.Setter;
 public class ProductFilterAttributes extends ERetrofitPageRequest {
 
     private Long productId;
+    private Long manufacturerId;
     private boolean isActive = Boolean.TRUE;
 
     public static ProductFilterAttributes defaultFilter() {

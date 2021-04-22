@@ -2,18 +2,17 @@ package com.retrofit.app.controller.v1;
 
 import com.retrofit.app.controller.BaseController;
 import com.retrofit.app.dto.ProductDTO;
-import com.retrofit.app.filters.ProductFilterAttributes;
 import com.retrofit.app.payload.request.CreateProductPayload;
 import com.retrofit.app.payload.request.UpdateProductPayload;
 import com.retrofit.app.service.ProductService;
 import io.swagger.annotations.Api;
-import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,7 +34,7 @@ public class ProductController extends BaseController {
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
     @Secured({ROLE_ADMIN})
-    public ProductDTO createProduct(@RequestBody CreateProductPayload createProductPayload)
+    public ProductDTO createProduct(@ModelAttribute CreateProductPayload createProductPayload)
     {
         return productService.createProduct(createProductPayload);
     }
@@ -67,14 +66,4 @@ public class ProductController extends BaseController {
     {
         return productService.deleteProductById(productId);
     }
-
-    @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    @Secured({ROLE_ADMIN,ROLE_USER})
-    public List<ProductDTO> findAllProducts(@RequestBody
-            ProductFilterAttributes productFilterAttributes)
-    {
-        return productService.findAllProducts(productFilterAttributes);
-    }
-
 }
